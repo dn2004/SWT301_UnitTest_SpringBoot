@@ -11,15 +11,17 @@ SpringBoot framework project
 
 Test tools: JUnit, Mockito
 
-Dependencies needed: H2
+Dependencies needed: H2, ObjectMapper
 
 ## Test Step
 Test steps include 3 layer: Repository, Service and Controller
 
 ### Repository layer
 1. Needed Anotation to test: 
-- @DataJpaTest
-- @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
+@DataJpaTest
+
+@AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2): Forces use of H2 database instead of real DB
+
 2. Name Test Structure
 
 - [Repository Name]\_[Repository Method]\_[Return Data type]
@@ -27,9 +29,12 @@ Test steps include 3 layer: Repository, Service and Controller
 Example: AnimalRepository_SaveAnimal_ReturnAnimal() 
 
 3. Test Steps
-- Create sample data to test.
-- Call the repository from test case.
-- Perform assertions to check data integrity.
+
+Step 1: Create sample data to test.
+
+Step 2: Call the repository from test case.
+
+Step 3: Perform assertions to check data integrity.
 
 
 Example from project: 
@@ -53,11 +58,17 @@ Example from project:
 
 1. Needed Anotation to Test:
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class): Enables Mockito for JUnit
+
+@Mock: create a mock object (fake repository)
+
+@InjectMocks: inject the fake repository into the service
+
 
 2. Set Up Data for Each Test:
 Example:
-@BeforeEach
+
+    @BeforeEach //run before each test case 
     void setUp() {
         elephant = new Animal(1L, "Elephant", "Loxodonta");
         wolf = new Animal(2L, "Wolf", "Canis lupus");
@@ -73,35 +84,31 @@ Example:
 Example: AnimalService_CreateAnimal_ReturnAnimal()
 
 4. Test Step
-- If the method has argument, create the parameter object. 
+Step 1: If the method has argument, create the parameter object. 
 
     Example: In AnimalService has a method Animal createAnimal(AnimalDto animalDto) => Create an AnimalDto Object.
 
-- Mock repository
+Step 2: Mock repository
 
-- Call the service method being tested
+Step 3: Call the service method being tested
 
-- Validate response
+Step 4: Validate response
 
 Example:
 
-    @BeforeEach
-    void setUp() {
-        elephant = new Animal(1L, "Elephant", "Loxodonta");
-        wolf = new Animal(2L, "Wolf", "Canis lupus");
-        lion = new Animal(3L, "Lion", "Panthera leo");
-        tiger = new Animal(4L, "Tiger", "Panthera tigris");
-        tiger2 = new Animal(5L, "Tiger2", "Panthera tigris");
-    }
 
     @Test
     void AnimalService_CreateAnimal_ReturnAnimal() {
+        //step 1
         AnimalDto animalDto = new AnimalDto("Elephant", "Loxodonta");
 
+        //step 2
         when(animalRepository.save(Mockito.any(Animal.class))).thenReturn(elephant);
 
+        //step 3
         Animal savedAnimal = animalService.createAnimal(animalDto);
 
+        //step 4
         Assertions.assertNotNull(savedAnimal);
         Assertions.assertNotNull(savedAnimal.getId());
         Assertions.assertEquals("Elephant", savedAnimal.getName());
@@ -111,9 +118,11 @@ Example:
 ### Controller Layer
 1. Needed Anotation to Test
 
-    @WebMvcTest(controllers = AnimalController.class)
+    @WebMvcTest(controllers = AnimalController.class): Loads only the animal controller being tested	
+    
+    @ExtendWith(MockitoExtension.class): Enables Mockito for JUnit
 
-    @ExtendWith(MockitoExtension.class)
+    @MockBean: replace actual service layer
 
 2. Name Test Structure
 
@@ -153,7 +162,7 @@ Example:
     }
 
 
-## Project Test Coverage
+## Project Test Coverage Video
 [link test coverage](https://www.youtube.com/watch?v=ZmKPRi8vpaA)
 
 
