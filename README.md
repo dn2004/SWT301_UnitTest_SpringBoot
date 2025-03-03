@@ -81,13 +81,13 @@ Example:
 3. Name Test Structure
 - [Service Name]\_[Service Method]\_[Return Data Type]
 
-Example: AnimalService_CreateAnimal_ReturnAnimal()
+  Example: AnimalService_CreateAnimal_ReturnAnimal()
 
 4. Test Step
 
 Step 1: If the method has argument, create the parameter object. 
 
-    Example: In AnimalService has a method Animal createAnimal(AnimalDto animalDto) => Create an AnimalDto Object.
+Example: In AnimalService has a method Animal createAnimal(AnimalDto animalDto) => Create an AnimalDto Object.
 
 Step 2: Mock repository
 
