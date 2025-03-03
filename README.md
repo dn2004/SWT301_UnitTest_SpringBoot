@@ -5,6 +5,7 @@
 A SpringBoot project to CRUD Animal.
 
 ## Project tools:
+
 IDE: IntelliJ
 
 SpringBoot framework project
@@ -18,6 +19,7 @@ Test steps include 3 layer: Repository, Service and Controller
 
 ### Repository layer
 1. Needed Anotation to test: 
+
 @DataJpaTest
 
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2): Forces use of H2 database instead of real DB
@@ -66,6 +68,7 @@ Example from project:
 
 
 2. Set Up Data for Each Test:
+
 Example:
 
     @BeforeEach //run before each test case 
@@ -77,8 +80,8 @@ Example:
         tiger2 = new Animal(5L, "Tiger2", "Panthera tigris");
     }
 
-
 3. Name Test Structure
+
 - [Service Name]\_[Service Method]\_[Return Data Type]
 
   Example: AnimalService_CreateAnimal_ReturnAnimal()
@@ -87,7 +90,7 @@ Example:
 
 Step 1: If the method has argument, create the parameter object. 
 
-Example: In AnimalService has a method Animal createAnimal(AnimalDto animalDto) => Create an AnimalDto Object.
+- Example: In AnimalService has a method Animal createAnimal(AnimalDto animalDto) => Create an AnimalDto Object.
 
 Step 2: Mock repository
 
