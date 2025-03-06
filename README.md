@@ -177,7 +177,7 @@ Example:
 | useTodo        | useTodo.Test  |        100       |
 
 ## Project Test Video
-[Link youtube](https://youtu.be/qakT4vKB2NU)
+[Link youtube](https://youtu.be/nlKSN7lf2iI)
 
 ## Reference
 [Spring Boot Unit Testing Tutorial (W/ Mockito) - Teddy Smith](https://www.youtube.com/watch?v=jqwZthuBmZY&list=PL82C6-O4XrHcg8sNwpoDDhcxUCbFy855E)
