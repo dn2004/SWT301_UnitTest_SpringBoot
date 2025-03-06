@@ -10,9 +10,9 @@ IDE: IntelliJ
 
 SpringBoot framework project
 
-Test tools: JUnit, Mockito
+Test tools: JUnit, Mockito (from the spring-boot-starter-test in SpringBoot framework)
 
-Dependencies needed: H2, ObjectMapper
+Dependencies needed: H2, ObjectMapper, JPA, Lombok
 
 ## Test Step
 Test steps include 3 layer: Repository, Service and Controller
@@ -20,9 +20,8 @@ Test steps include 3 layer: Repository, Service and Controller
 ### Repository layer
 1. Needed Anotation to test: 
 
-@DataJpaTest
+@DataJpaTest: used to test JPA repositories in Spring Boot applications. This annotation sets up an in-memory H2 database and configure Spring Data JPA for us.
 
-@AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2): Forces use of H2 database instead of real DB
 
 2. Name Test Structure
 
@@ -32,28 +31,29 @@ Example: AnimalRepository_SaveAnimal_ReturnAnimal()
 
 3. Test Steps
 
-Step 1: Create sample data to test.
+Step 1: Create sample data to test. (Arrange)
 
-Step 2: Call the repository from test case.
+Step 2: Call the repository from test case. (Act)
 
-Step 3: Perform assertions to check data integrity.
+Step 3: Perform assertions to check data integrity. (Assert)
 
 
 Example from project: 
 
     @Test
     void AnimalRepository_SaveAnimal_ReturnAnimal() {
-            //step 1: create data to test
-            Animal animal = new Animal();
-            animal.setName("Lion");
-            animal.setSpecies("Panthera leo");
+        //Arrange
+        Animal animal = new Animal();
+        animal.setName("Lion");
+        animal.setSpecies("Panthera leo");
 
-            //step 2: call the repository method
-            Animal savedAnimal = animalRepository.save(animal);
-            
-            //step 3: Perfrom Assertion
-            Assertions.assertNotNull(savedAnimal.getId());
+        //Act
+        Animal savedAnimal = animalRepository.save(animal);
+
+        //Assert
+        Assertions.assertNotNull(savedAnimal.getId());
     }
+
 
 
 ### Service Layer
@@ -134,15 +134,15 @@ Example:
 
 3. Test Step
 
-Step 1: Mock the service method to return expected results.
+Step 1: Mock the service method to return expected results.(Arrange)
 
-Step 2: Send an HTTP request (POST, GET, PUT, DELETE).
+Step 2: Send an HTTP request (POST, GET, PUT, DELETE). (Act)
 
-Step 3: Set the appropriate headers and content type.
+Step 3: Set the appropriate headers and content type. (Act)
 
-Step 4: Validate the HTTP response status
+Step 4: Validate the HTTP response status (Assert)
 
-Step 5: Verify the response body
+Step 5: Verify the response body (Assert)
 
 Example: 
 
@@ -167,9 +167,17 @@ Example:
     }
 
 
-## Project Test Coverage Video
-[link test coverage](https://www.youtube.com/watch?v=ZmKPRi8vpaA)
+## Coverage Information: 
 
+| Component/Hook | Coverage by   | Coverage Percent |
+|----------------|---------------|:----------------:|
+| TodoForm       | TodoForm.test |        100       |
+| TodoList       | TodoList.test |        100       |
+| TodoItem       | TodoList.Test |        100       |
+| useTodo        | useTodo.Test  |        100       |
+
+## Project Test Video
+[Link youtube](https://youtu.be/qakT4vKB2NU)
 
 ## Reference
 [Spring Boot Unit Testing Tutorial (W/ Mockito) - Teddy Smith](https://www.youtube.com/watch?v=jqwZthuBmZY&list=PL82C6-O4XrHcg8sNwpoDDhcxUCbFy855E)

@@ -1,6 +1,7 @@
 package SAP1801.SWT301.AnimalUnitTest.service;
 
 import SAP1801.SWT301.AnimalUnitTest.dto.AnimalDto;
+import SAP1801.SWT301.AnimalUnitTest.exception.AnimalNotFoundException;
 import SAP1801.SWT301.AnimalUnitTest.repository.AnimalRepository;
 import SAP1801.SWT301.AnimalUnitTest.model.Animal;
 import SAP1801.SWT301.AnimalUnitTest.service.Impl.AnimalServiceImpl;
@@ -24,11 +25,11 @@ class AnimalServiceTest {
     @Mock
     private AnimalRepository animalRepository;
 
+
     @InjectMocks
     private AnimalServiceImpl animalService;
 
     private Animal elephant;
-    private Animal wolf;
     private Animal lion;
     private Animal tiger;
     private Animal tiger2;
@@ -36,7 +37,6 @@ class AnimalServiceTest {
     @BeforeEach
     void setUp() {
         elephant = new Animal(1L, "Elephant", "Loxodonta");
-        wolf = new Animal(2L, "Wolf", "Canis lupus");
         lion = new Animal(3L, "Lion", "Panthera leo");
         tiger = new Animal(4L, "Tiger", "Panthera tigris");
         tiger2 = new Animal(5L, "Tiger2", "Panthera tigris");
@@ -44,76 +44,118 @@ class AnimalServiceTest {
 
     @Test
     void AnimalService_CreateAnimal_ReturnAnimal() {
+        //Arrange
         AnimalDto animalDto = new AnimalDto("Elephant", "Loxodonta");
 
         when(animalRepository.save(Mockito.any(Animal.class))).thenReturn(elephant);
 
+        //Act
         Animal savedAnimal = animalService.createAnimal(animalDto);
 
+        //Assert
         Assertions.assertNotNull(savedAnimal);
         Assertions.assertNotNull(savedAnimal.getId());
-        Assertions.assertEquals("Elephant", savedAnimal.getName());
-        Assertions.assertEquals("Loxodonta", savedAnimal.getSpecies());
+        Assertions.assertEquals(animalDto.getName(), savedAnimal.getName());
+        Assertions.assertEquals(animalDto.getSpecies(), savedAnimal.getSpecies());
+        verify(animalRepository, times(1)).save(Mockito.any(Animal.class));
     }
 
     @Test
     void AnimalService_GetAnimalBySpecies_ReturnAnimalList() {
-        when(animalRepository.findBySpecies("Panthera tigris")).thenReturn(List.of(tiger, tiger2));
+        //Arrange
+        String species = "Panthera tigris";
+        when(animalRepository.findBySpecies(species)).thenReturn(List.of(tiger, tiger2));
+
+        //Act
         List<Animal> animals = animalService.getAnimalBySpecies("Panthera tigris");
 
-        Assertions.assertFalse(animals.isEmpty());
+        //Assert
+        Assertions.assertEquals(2, animals.size());
         Assertions.assertEquals("Tiger", animals.getFirst().getName());
-        Assertions.assertEquals("Panthera tigris", animals.getFirst().getSpecies());
+        Assertions.assertEquals(species, animals.getFirst().getSpecies());
         Assertions.assertEquals("Tiger2", animals.get(1).getName());
-        Assertions.assertEquals("Panthera tigris", animals.get(1).getSpecies());
+        Assertions.assertEquals(species, animals.get(1).getSpecies());
+        verify(animalRepository, times(1)).findBySpecies(species);
     }
 
     @Test
     void AnimalService_GetAllAnimals_ReturnAnimalList() {
-        when(animalRepository.findAll()).thenReturn(List.of(lion));
+        //Arrange
+        List<Animal> expectedList = List.of(lion, tiger);
+        when(animalRepository.findAll()).thenReturn(expectedList);
 
-        List<Animal> animals = animalService.getAllAnimals();
+        //Act
+        List<Animal> actualList = animalService.getAllAnimals();
 
-        Assertions.assertFalse(animals.isEmpty());
-        Assertions.assertEquals("Lion", animals.get(0).getName());
-        Assertions.assertEquals("Panthera leo", animals.get(0).getSpecies());
+        //Assert
+        Assertions.assertEquals(expectedList, actualList);
+        Assertions.assertEquals(2, actualList.size());
+        verify(animalRepository, times(1)).findAll();
     }
 
     @Test
-    void AnimalService_GetAnimalById_ReturnAnimal() {
+    void AnimalService_GetAnimalById_ThrowAnimalNotFoundException() {
+        //Arrange
+        Long notFoundAnimalId = 4L;
+        when(animalRepository.findById(notFoundAnimalId)).thenReturn(Optional.empty());
+
+        //Act & Assert
+        AnimalNotFoundException exception = Assertions.assertThrows(
+            AnimalNotFoundException.class, () -> animalService.getAnimalById(notFoundAnimalId)
+        );
+
+        Assertions.assertEquals("Cannot found animal from the id", exception.getMessage());
+        verify(animalRepository, times(1)).findById(notFoundAnimalId);
+    }
+
+    @Test
+    public void AnimalService_GetAnimalBy_Id_ReturnAnimal() {
+        //Arrange
         Long animalId = 4L;
+        when(animalRepository.findById(animalId)).thenReturn(Optional.of(elephant));
 
-        when(animalRepository.findById(animalId)).thenReturn(Optional.ofNullable(tiger));
-        Optional<Animal> animal = Optional.ofNullable(animalService.getAnimalById(animalId));
-
-        Assertions.assertTrue(animal.isPresent());
-        Assertions.assertEquals("Tiger", animal.get().getName());
-        Assertions.assertEquals("Panthera tigris", animal.get().getSpecies());
+        //Act
+        Animal animal = animalService.getAnimalById(animalId);
+        //Assert
+        Assertions.assertEquals(elephant, animal);
+        verify(animalRepository, times(1)).findById(animalId);
     }
 
     @Test
     void AnimalService_DeleteAnimal_ReturnVoid() {
+        //Arrange
         Long animalId = 4L;
-
         when(animalRepository.findById(animalId)).thenReturn(Optional.of(tiger));
-        doNothing().when(animalRepository).delete(tiger);
 
-        Assertions.assertAll(() -> animalService.deleteAnimal(animalId));
+        //Act
+        Assertions.assertDoesNotThrow(() -> animalService.deleteAnimal(animalId));
+
+        //Assert
+        verify(animalRepository, times(1)).findById(animalId);
+        verify(animalRepository, times(1)).delete(tiger);
     }
 
     @Test
     void AnimalService_UpdateAnimal_ReturnAnimal() {
+
+        //Arrange
         Long animalId = 3L;
         AnimalDto animalDto = new AnimalDto("Updated Lion", "Updated Panthera leo");
-        Animal updatedLion = new Animal(animalId, "Updated Lion", "Updated Panthera leo");
+
+        Animal updatedLion = new Animal(animalId, animalDto.getName(), animalDto.getSpecies());
 
         when(animalRepository.findById(animalId)).thenReturn(Optional.of(lion));
         when(animalRepository.save(any(Animal.class))).thenReturn(updatedLion);
 
+        //Act
         Animal result = animalService.updateAnimal(animalId, animalDto);
 
+        //Assert
         Assertions.assertNotNull(result);
-        Assertions.assertEquals("Updated Lion", result.getName());
-        Assertions.assertEquals("Updated Panthera leo", result.getSpecies());
+        Assertions.assertEquals(animalId, result.getId());
+        Assertions.assertEquals(animalDto.getName(), result.getName());
+        Assertions.assertEquals(animalDto.getSpecies(), result.getSpecies());
+        verify(animalRepository, times(1)).findById(animalId);
+        verify(animalRepository, times(1)).save(any(Animal.class));
     }
 }

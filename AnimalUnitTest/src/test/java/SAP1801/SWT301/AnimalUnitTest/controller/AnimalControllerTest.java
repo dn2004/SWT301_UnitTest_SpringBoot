@@ -1,6 +1,7 @@
 package SAP1801.SWT301.AnimalUnitTest.controller;
 
 import SAP1801.SWT301.AnimalUnitTest.dto.AnimalDto;
+import SAP1801.SWT301.AnimalUnitTest.exception.AnimalNotFoundException;
 import SAP1801.SWT301.AnimalUnitTest.model.Animal;
 import SAP1801.SWT301.AnimalUnitTest.service.AnimalService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,9 +9,7 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,14 +22,12 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = AnimalController.class)
-@ExtendWith(MockitoExtension.class)
 class AnimalControllerTest {
 
     @Autowired
@@ -63,32 +60,36 @@ class AnimalControllerTest {
 
     @Test
     public void AnimalController_CreateAnimal_ReturnAnimal() throws Exception {
-        // Giả lập service với `invocation` để kiểm tra dữ liệu đầu vào
+        // Arrange
         given(animalService.createAnimal(ArgumentMatchers.any())).willAnswer(invocation -> {
-            AnimalDto dto = invocation.getArgument(0, AnimalDto.class); // Lấy tham số đầu vào
-            return new Animal(1L, dto.getName(), dto.getSpecies()); // Tạo Animal với ID cố định
+            AnimalDto dto = invocation.getArgument(0, AnimalDto.class);
+            return new Animal(1L, dto.getName(), dto.getSpecies());
         });
 
-        // Gửi request POST với AnimalDto
+        // Act
         ResultActions response = mockMvc.perform(post("/animals")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(animalDto)));
 
-        // Kiểm tra API phản hồi đúng
+        // Assert
         response.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(Matchers.equalTo(1)))
                 .andExpect(jsonPath("$.name").value(CoreMatchers.is(animalDto.getName())))
                 .andExpect(jsonPath("$.species").value(CoreMatchers.is(animalDto.getSpecies())));
+        verify(animalService, times(1)).createAnimal(ArgumentMatchers.any());
     }
 
 
 
     @Test
     public void AnimalController_GetAllAnimals_ReturnAnimalList() throws Exception {
+        //Arrange
         when(animalService.getAllAnimals()).thenReturn(List.of(elephant, lion, tiger));
 
+        //Act
         ResultActions response = mockMvc.perform(get("/animals"));
 
+        //Assert
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(elephant.getName()))
                 .andExpect(jsonPath("$[0].species").value(elephant.getSpecies()))
@@ -96,54 +97,95 @@ class AnimalControllerTest {
                 .andExpect(jsonPath("$[1].species").value(lion.getSpecies()))
                 .andExpect(jsonPath("$[2].name").value(tiger.getName()))
                 .andExpect(jsonPath("$[2].species").value(tiger.getSpecies()));
+        verify(animalService, times(1)).getAllAnimals();
     }
 
     @Test
     public void AnimalController_GetAnimalById_ReturnAnimalList() throws Exception {
-        when(animalService.getAnimalById(4L)).thenReturn(tiger);
+        //Arrange
+        Long animalId = 4L;
+        when(animalService.getAnimalById(animalId)).thenReturn(tiger);
 
+        //Act
         ResultActions response = mockMvc.perform(get("/animals/4"));
 
+        //Assert
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(tiger.getName()))
                 .andExpect(jsonPath("$.species").value(tiger.getSpecies()));
+        verify(animalService, times(1)).getAnimalById(animalId);
     }
 
     @Test
     public void AnimalController_DeleteAnimal_ReturnString() throws Exception {
-        doNothing().when(animalService).deleteAnimal(1L);
+        //Arrange
+        Long animalId = 1L;
+        doNothing().when(animalService).deleteAnimal(animalId);
 
+        //Act
         ResultActions response = mockMvc.perform(delete("/animals/1"));
 
+        //Assert
         response.andExpect(status().isOk());
+        verify(animalService).deleteAnimal(animalId);
     }
 
     @Test
+    public void AnimalController_DeleteAnimal_ReturnNotFound() throws Exception {
+        // Arrange
+        Long animalId = 100L;
+        doThrow(new AnimalNotFoundException("Animal not found with ID: " + animalId))
+                .when(animalService).deleteAnimal(animalId);
+
+        // Act
+        ResultActions response = mockMvc.perform(delete("/animals/100"));
+
+        // Assert
+        response.andExpect(status().isNotFound())
+                .andExpect(jsonPath("$").value("Animal not found with ID: " + animalId));
+
+        verify(animalService).deleteAnimal(animalId);
+    }
+
+
+
+
+    @Test
     public void AnimalController_GetAnimalBySpecies_ReturnAnimalList() throws Exception {
-        when(animalService.getAnimalBySpecies("Panthera leo")).thenReturn(List.of(lion, lioness));
+        //Arrange
+        String species = "Panthera leo";
 
-        ResultActions response = mockMvc.perform(get("/animals/species/Panthera leo"));
+        when(animalService.getAnimalBySpecies(species)).thenReturn(List.of(lion, lioness));
 
+        //Act
+        ResultActions response = mockMvc.perform(get("/animals/species/"+species));
+
+        //Assert
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].name").value(lion.getName()))
                 .andExpect(jsonPath("$[0].species").value(lion.getSpecies()))
                 .andExpect(jsonPath("$[1].name").value(lioness.getName()))
                 .andExpect(jsonPath("$[1].species").value(lioness.getSpecies()));
+        verify(animalService, times(1)).getAnimalBySpecies(species);
     }
 
     @Test
     public void AnimalController_UpdateAnimal_ReturnAnimal() throws Exception {
+        //Arrange
         Animal updatedAnimal = new Animal(2L, "Updated Lion", "Updated Panthera leo");
 
         when(animalService.updateAnimal(eq(2L), any(AnimalDto.class))).thenReturn(updatedAnimal);
 
+        //Act
         ResultActions response = mockMvc.perform(put("/animals/2")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(updatedAnimalDto)));
-
+        //Assert
         response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(Matchers.equalTo(2)))
                 .andExpect(jsonPath("$.name").value(updatedAnimalDto.getName()))
                 .andExpect(jsonPath("$.species").value(updatedAnimalDto.getSpecies()));
+        verify(animalService, times(1)).updateAnimal(eq(2L), any(AnimalDto.class));
     }
 }

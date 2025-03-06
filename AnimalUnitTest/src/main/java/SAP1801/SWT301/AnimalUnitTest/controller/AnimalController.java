@@ -1,6 +1,7 @@
 package SAP1801.SWT301.AnimalUnitTest.controller;
 
 import SAP1801.SWT301.AnimalUnitTest.dto.AnimalDto;
+import SAP1801.SWT301.AnimalUnitTest.exception.AnimalNotFoundException;
 import SAP1801.SWT301.AnimalUnitTest.model.Animal;
 import SAP1801.SWT301.AnimalUnitTest.service.AnimalService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,5 +52,10 @@ public class AnimalController {
     @PutMapping("/{id}")
     public ResponseEntity<Animal> updateAnimal(@PathVariable Long id, @RequestBody AnimalDto animalDto) {
         return ResponseEntity.ok(animalService.updateAnimal(id, animalDto));
+    }
+
+    @ExceptionHandler(AnimalNotFoundException.class)
+    public ResponseEntity<String> handleNotFound(AnimalNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }
